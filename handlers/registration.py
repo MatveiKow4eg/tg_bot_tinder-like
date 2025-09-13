@@ -71,7 +71,7 @@ def back_kb() -> ReplyKeyboardMarkup:
         resize_keyboard=True,
         one_time_keyboard=False,
         selective=True,
-        input_field_placeholder="Нажмите ‘Назад’ для отмены",
+        input_field_placeholder="Нажмите 'Назад' для отмены",
     )
 
 
@@ -139,13 +139,13 @@ async def cmd_register(message: Message, state: FSMContext) -> None:
     if existing:
         await message.answer(
             "Обновим вашу анкету. Отправьте имя (как вы хотите, чтобы оно отображалось).\n"
-            "Для отмены нажмите ‘⬅️ Назад’.",
+            "Для отмены нажмите '⬅️ Назад'.",
             reply_markup=back_kb(),
         )
     else:
         await message.answer(
             "Создадим вашу анкету. Отправьте имя (как вы хотите, чтобы оно отображалось).\n"
-            "Для отмены нажмите ‘⬅️ Назад’.",
+            "Для отмены нажмите '⬅️ Назад'.",
             reply_markup=back_kb(),
         )
     data = await state.get_data()
@@ -312,7 +312,7 @@ async def reg_bio(message: Message, state: FSMContext) -> None:
     if raw == BACK_BTN:
         await state.set_state(Registration.photo)
         logger.debug("reg_bio: BACK -> Registration.photo")
-        await message.answer("Отправьте фото для анкеты (как фотографию, не файлом).", reply_markup=back_kb())
+        await message.answer("Отправьте фото для анкеты (как фотографию, не файло��).", reply_markup=back_kb())
         return
     bio = raw
     if not bio:
@@ -347,7 +347,7 @@ async def _create_or_update_profile(message: Message, data: Dict[str, Any]) -> N
     upsert_user_basic(user.id, user.username, user.first_name, user.last_name)
     db_user = get_user_by_tg_id(user.id)
     if not db_user:
-        await message.answer("Ошибка: не удалось идентифицировать пользователя в базе.")
+        await message.answer("Ошибка: не удалось идент��фицировать пользователя в базе.")
         return
 
     name = data.get("name")
@@ -623,10 +623,15 @@ async def change_photo_receive(message: Message, state: FSMContext) -> None:
     try:
         table(PROFILES).update({"photos": [url]}).eq("id", p["id"]).execute()
         await message.answer("Медиа обновлено.")
+        text = _format_profile(p) + "\n\nВыберите:\n1. Смотреть анкеты\n2. Заполнить анкету заново\n3. Изменить фото/видео\n4. Изменить текст анкеты\n(ответьте цифрой)"
+        await message.answer(text, reply_markup=main_menu_kb())
+        await state.set_state(MyProfileMenu.waiting_choice)
+        return
     except Exception as e:
         logger.error(f"Update media error: {e}")
         await message.answer("Ошибка обновления медиа.")
-    await state.clear()
+        await state.clear()
+        return
 
 
 @router.message(ChangePhoto.waiting_photo)
@@ -676,7 +681,17 @@ async def change_bio_receive(message: Message, state: FSMContext) -> None:
     try:
         table(PROFILES).update({"bio": bio}).eq("id", p["id"]).execute()
         await message.answer("Текст анкеты обновлён.")
+        # Get updated profile and show menu
+        updated_p = _get_profile_for_user(user.id)
+        if updated_p:
+            text = _format_profile(updated_p) + "\n\nВыберите:\n1. Смотреть анкеты\n2. Заполнить анкету заново\n3. Изменить фото/видео\n4. Изменить текст анкеты\n(ответьте цифрой)"
+            await message.answer(text, reply_markup=main_menu_kb())
+            await state.set_state(MyProfileMenu.waiting_choice)
+        else:
+            await state.clear()
+        return
     except Exception as e:
         logger.error(f"Update bio error: {e}")
         await message.answer("Ошибка обновления текста анкеты.")
-    await state.clear()
+        await state.clear()
+        return

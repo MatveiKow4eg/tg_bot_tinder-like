@@ -1,0 +1,8 @@
+aiogram>=3.4.0,<4.0.0
+supabase>=2.4.0,<3.0.0
+cloudinary>=1.40.0,<2.0.0
+pydantic>=2.4.0,<3.0.0
+python-dotenv>=1.0.0,<2.0.0
+loguru>=0.7.2,<1.0.0
+httpx>=0.24.1,<1.0.0
+ujson>=5.9.0,<6.0.0
